@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	pb "ewallet/gateaway/proto"
-	"fmt"
 	"log"
+	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -16,41 +18,84 @@ const (
 	transactionAddress = "localhost:50051"
 )
 
-func main() {
-	// user
-	connuser, err := grpc.NewClient(userAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+type userRequest struct {
+	UserID uint32 `json:"user_id"`
+}
+type server struct {
+	userClient        pb.UserServiceClient
+	transactionClient pb.TransactionServiceClient
+}
+type walletRequest struct {
+	UserID int32 `json:"user_id"`
+}
+
+func newServer() *server {
+	// User connection
+	connUser, err := grpc.NewClient(userAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	defer connuser.Close()
+
+	// Transaction connection
+	connTransaction, err := grpc.NewClient(transactionAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+
+	return &server{
+		userClient:        pb.NewUserServiceClient(connUser),
+		transactionClient: pb.NewTransactionServiceClient(connTransaction),
+	}
+}
+func (s *server) getUserByID(c *gin.Context) {
+	userIDParam := c.Param("userID")
+	userID, err := strconv.ParseUint(userIDParam, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	// transaction
-	conntransaction, err := grpc.NewClient(transactionAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	res, err := s.userClient.GetUserByID(ctx, &pb.GetUserByIDRequest{UserId: uint32(userID)})
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-	defer conntransaction.Close()
-	ctx, canceltrans := context.WithTimeout(context.Background(), time.Second)
-	defer canceltrans()
 
-	c := pb.NewUserServiceClient(connuser)
-	d := pb.NewTransactionServiceClient(conntransaction)
-	userID := uint32(1) // replace with the user ID you want to fetch
+	c.JSON(http.StatusOK, res.GetUser())
+}
 
-	r, err := c.GetUserByID(ctx, &pb.GetUserByIDRequest{UserId: userID})
+func (s *server) getWalletByUserID(c *gin.Context) {
+	userIDParam := c.Param("userID")
+	userID, err := strconv.ParseInt(userIDParam, 10, 32)
 	if err != nil {
-		log.Fatalf("could not get user: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
 	}
-	fmt.Printf("User: %v\n", r.GetUser())
 
-	userIDx := int32(1)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
-	t, err := d.GetWalletByUserID(ctx, &pb.GetWalletByUserIDRequest{UserId: userIDx})
+	res, err := s.transactionClient.GetWalletByUserID(ctx, &pb.GetWalletByUserIDRequest{UserId: int32(userID)})
 	if err != nil {
-		log.Fatalf("could not get user: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
-	fmt.Printf("User: %v\n", t.GetWallets())
 
+	c.JSON(http.StatusOK, res.GetWallets())
+}
+
+func main() {
+	srv := newServer()
+
+	r := gin.Default()
+	r.GET("/getUserByID/:userID", srv.getUserByID)
+	r.GET("/getWalletByUserID/:userID", srv.getWalletByUserID)
+
+	log.Println("Starting HTTP server on port 8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("could not start server: %v", err)
+	}
 }
