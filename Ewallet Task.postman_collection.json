@@ -12,11 +12,26 @@
 				{
 					"name": "createUser&wallet",
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "password",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"user\": {\r\n        \"email\": \"asdff234@sdf.com\",\r\n        \"password\": \"asdddf\",\r\n        \"username\": \"asdddf\"\r\n    }\r\n}",
+							"raw": "{\r\n    \"user\": {\r\n        \"email\": \"nama3@sdf.com\",\r\n        \"password\": \"nama3\",\r\n        \"username\": \"nama3\"\r\n    }\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -68,11 +83,26 @@
 				{
 					"name": "transfer",
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "password",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"user_idfrom\": 1,\r\n    \"user_idto\": 5,\r\n    \"amount\": 20\r\n}\r\n",
+							"raw": "{\r\n    \"user_idfrom\": 11,\r\n    \"user_idto\": 13,\r\n    \"amount\": 20\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
