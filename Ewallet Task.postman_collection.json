@@ -55,11 +55,26 @@
 				{
 					"name": "topup",
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "password",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"user_id\": 3,\r\n    \"amount\": 50\r\n}",
+							"raw": "{\r\n    \"user_id\": 13,\r\n    \"amount\": 50\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -102,7 +117,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"user_idfrom\": 11,\r\n    \"user_idto\": 13,\r\n    \"amount\": 20\r\n}\r\n",
+							"raw": "{\r\n    \"user_idfrom\": 13,\r\n    \"user_idto\": 11,\r\n    \"amount\": 20\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -129,7 +144,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/getTransactionByUserID/6",
+							"raw": "http://localhost:8080/getTransactionByUserID/13",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -137,7 +152,7 @@
 							"port": "8080",
 							"path": [
 								"getTransactionByUserID",
-								"6"
+								"13"
 							]
 						}
 					},

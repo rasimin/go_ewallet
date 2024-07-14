@@ -44,10 +44,7 @@ func (r *transactionRepository) CreateTransaction(ctx context.Context, transacti
 func (r *transactionRepository) GetWalletByID(ctx context.Context, walletID int) (entity.Wallet, error) {
 	var wallet entity.Wallet
 
-	if err := r.db.WithContext(ctx).First(&wallet, "Wallet_id = ?", walletID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return entity.Wallet{}, errors.New("wallet not found")
-		}
+	if err := r.db.WithContext(ctx).First(&wallet, "Wallet_id = ?", walletID).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return entity.Wallet{}, err
 	}
 	return wallet, nil
@@ -92,6 +89,7 @@ func (r *transactionRepository) GetTransactionByUserID(ctx context.Context, user
 	var transactions []entity.Transaction
 
 	if err := r.db.WithContext(ctx).
+		// Debug().
 		Joins("JOIN wallets ON transactions.wallet_id = wallets.wallet_id").
 		Where("wallets.user_id = ?", userID).
 		Find(&transactions).Error; err != nil {

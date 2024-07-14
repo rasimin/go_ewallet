@@ -205,5 +205,7 @@ func (s *transactionService) GetTransactionByUserID(ctx context.Context, userID 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transactions: %v", err)
 	}
+	// log.Printf("transactions: %+v", transactions)
 	return transactions, nil
+
 }

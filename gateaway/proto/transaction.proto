@@ -16,6 +16,7 @@ service TransactionService {
   rpc Payment(PaymentRequest) returns (PaymentResponse);
   rpc GetWalletByUserID(GetWalletByUserIDRequest) returns (GetWalletByUserIDResponse);
   rpc GetTransactionByUserID(GetTransactionByUserIDRequest) returns (GetTransactionByUserIDResponse);
+  rpc GetWalletByID(GetWalletByIdrequest) returns (GetWalletByIdrespon);
 }
 
 
@@ -26,6 +27,7 @@ message Transaction {
   float amount = 3;
   string transaction_type = 4;
   google.protobuf.Timestamp created_at = 5;
+  int32 walletidsource = 6;
 }
 
 // The wallet message.
@@ -120,4 +122,14 @@ message GetTransactionByUserIDRequest {
 // Response message for GetTransactionByUserID
 message GetTransactionByUserIDResponse {
   repeated Transaction transactions = 1;
+}
+
+
+message GetWalletByIdrequest {
+  int32 id = 1;
+}
+
+// Response message for GetTransactionByUserID
+message GetWalletByIdrespon {
+  Wallet Wallet = 1;
 }

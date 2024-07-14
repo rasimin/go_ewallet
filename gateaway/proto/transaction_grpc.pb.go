@@ -27,6 +27,7 @@ const (
 	TransactionService_Payment_FullMethodName                = "/ewallet.TransactionService/Payment"
 	TransactionService_GetWalletByUserID_FullMethodName      = "/ewallet.TransactionService/GetWalletByUserID"
 	TransactionService_GetTransactionByUserID_FullMethodName = "/ewallet.TransactionService/GetTransactionByUserID"
+	TransactionService_GetWalletByID_FullMethodName          = "/ewallet.TransactionService/GetWalletByID"
 )
 
 // TransactionServiceClient is the client API for TransactionService service.
@@ -43,6 +44,7 @@ type TransactionServiceClient interface {
 	Payment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error)
 	GetWalletByUserID(ctx context.Context, in *GetWalletByUserIDRequest, opts ...grpc.CallOption) (*GetWalletByUserIDResponse, error)
 	GetTransactionByUserID(ctx context.Context, in *GetTransactionByUserIDRequest, opts ...grpc.CallOption) (*GetTransactionByUserIDResponse, error)
+	GetWalletByID(ctx context.Context, in *GetWalletByIdrequest, opts ...grpc.CallOption) (*GetWalletByIdrespon, error)
 }
 
 type transactionServiceClient struct {
@@ -133,6 +135,16 @@ func (c *transactionServiceClient) GetTransactionByUserID(ctx context.Context, i
 	return out, nil
 }
 
+func (c *transactionServiceClient) GetWalletByID(ctx context.Context, in *GetWalletByIdrequest, opts ...grpc.CallOption) (*GetWalletByIdrespon, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWalletByIdrespon)
+	err := c.cc.Invoke(ctx, TransactionService_GetWalletByID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TransactionServiceServer is the server API for TransactionService service.
 // All implementations must embed UnimplementedTransactionServiceServer
 // for forward compatibility
@@ -147,6 +159,7 @@ type TransactionServiceServer interface {
 	Payment(context.Context, *PaymentRequest) (*PaymentResponse, error)
 	GetWalletByUserID(context.Context, *GetWalletByUserIDRequest) (*GetWalletByUserIDResponse, error)
 	GetTransactionByUserID(context.Context, *GetTransactionByUserIDRequest) (*GetTransactionByUserIDResponse, error)
+	GetWalletByID(context.Context, *GetWalletByIdrequest) (*GetWalletByIdrespon, error)
 	mustEmbedUnimplementedTransactionServiceServer()
 }
 
@@ -177,6 +190,9 @@ func (UnimplementedTransactionServiceServer) GetWalletByUserID(context.Context, 
 }
 func (UnimplementedTransactionServiceServer) GetTransactionByUserID(context.Context, *GetTransactionByUserIDRequest) (*GetTransactionByUserIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTransactionByUserID not implemented")
+}
+func (UnimplementedTransactionServiceServer) GetWalletByID(context.Context, *GetWalletByIdrequest) (*GetWalletByIdrespon, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWalletByID not implemented")
 }
 func (UnimplementedTransactionServiceServer) mustEmbedUnimplementedTransactionServiceServer() {}
 
@@ -335,6 +351,24 @@ func _TransactionService_GetTransactionByUserID_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TransactionService_GetWalletByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWalletByIdrequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TransactionServiceServer).GetWalletByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TransactionService_GetWalletByID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TransactionServiceServer).GetWalletByID(ctx, req.(*GetWalletByIdrequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TransactionService_ServiceDesc is the grpc.ServiceDesc for TransactionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -373,6 +407,10 @@ var TransactionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTransactionByUserID",
 			Handler:    _TransactionService_GetTransactionByUserID_Handler,
+		},
+		{
+			MethodName: "GetWalletByID",
+			Handler:    _TransactionService_GetWalletByID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

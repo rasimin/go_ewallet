@@ -10,5 +10,5 @@ type Transaction struct {
 	Amount          float64   `gorm:"type:decimal(10,2);not null"`
 	TransactionType string    `gorm:"type:varchar(20);not null"`
 	CreatedAt       time.Time `gorm:"default:current_timestamp"`
-	WalletIDSource  int       `gorm:"null;"`
+	WalletIDSource  int       `gorm:"column:wallet_id_source"`
 }

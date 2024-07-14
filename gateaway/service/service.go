@@ -179,7 +179,6 @@ func (s *Server) TopUp(c *gin.Context) {
 		"transaction": res.Transaction,
 	})
 }
-
 func (s *Server) GetTransactionByUserID(c *gin.Context) {
 	userIDParam := c.Param("userID")
 	userID, err := strconv.ParseInt(userIDParam, 10, 32)
@@ -190,14 +189,61 @@ func (s *Server) GetTransactionByUserID(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-
-	res, err := s.TransactionClient.GetTransactionByUserID(ctx, &pb.GetTransactionByUserIDRequest{UserId: int32(userID)})
+	userres, err := s.UserClient.GetUserByID(ctx, &pb.GetUserByIDRequest{UserId: uint32(userID)})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error1": status.Convert(err).Message()})
 		return
 	}
 
-	c.JSON(http.StatusOK, res.GetTransactions())
+	res, err := s.TransactionClient.GetTransactionByUserID(ctx, &pb.GetTransactionByUserIDRequest{UserId: int32(userID)})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": status.Convert(err).Message()})
+		return
+	}
+
+	// Prepare response
+	var transactions []model.Transaction
+	for _, t := range res.GetTransactions() {
+		// log.Printf("walletsource: %+v", t.Walletidsource)
+		res_wall, err := s.TransactionClient.GetWalletByID(ctx, &pb.GetWalletByIdrequest{Id: int32(t.Walletidsource)})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error4": status.Convert(err).Message()})
+			return
+		}
+		// log.Printf("result: %+v", res_wall)
+
+		userRes_wall, err := s.UserClient.GetUserByID(ctx, &pb.GetUserByIDRequest{UserId: uint32(res_wall.Wallet.UserId)})
+		var sourceUserID uint32
+		var sourceUserName string
+
+		// log.Printf("result: %+v", res_wall)
+
+		if err == nil && userRes_wall.User != nil {
+			sourceUserID = userRes_wall.User.UserId
+			sourceUserName = userRes_wall.User.Username
+		} else {
+			sourceUserID = 0
+			sourceUserName = ""
+		}
+
+		transaction := model.Transaction{
+			TransactionID:  t.TransactionId,
+			UserID:         uint32(userID),
+			Username:       userres.User.Username,
+			Amount:         t.Amount,
+			Type:           t.TransactionType,
+			CreatedAt:      t.CreatedAt.AsTime(),
+			SourceUserID:   sourceUserID,
+			SourceUserName: sourceUserName,
+		}
+		transactions = append(transactions, transaction)
+	}
+
+	response := model.TransactionsResponse{
+		Transactions: transactions,
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (s *Server) GetUserAndBalanceWallet(c *gin.Context) {
@@ -214,21 +260,27 @@ func (s *Server) GetUserAndBalanceWallet(c *gin.Context) {
 	// Fetch user details
 	userRes, err := s.UserClient.GetUserByID(ctx, &pb.GetUserByIDRequest{UserId: uint32(userID)})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": status.Convert(err).Message()})
 		return
 	}
 
 	// Fetch wallet details
 	walletRes, err := s.TransactionClient.GetWalletByUserID(ctx, &pb.GetWalletByUserIDRequest{UserId: int32(userID)})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": status.Convert(err).Message()})
 		return
 	}
 
 	// Prepare combined response
-	response := model.UserAndWalletResponse{
-		User:   userRes.GetUser(),
-		Wallet: walletRes.GetWallets(),
+	user := userRes.GetUser()
+	wallet := walletRes.GetWallets() // Assuming only one wallet per user
+
+	response := model.UserBalance{
+		UserID:    user.UserId,
+		Username:  user.Username,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt.AsTime(),
+		Balance:   wallet.Balance,
 	}
 
 	c.JSON(http.StatusOK, response)

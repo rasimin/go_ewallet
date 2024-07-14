@@ -67,6 +67,7 @@ func (h *TransactionHandler) GetTransaction(ctx context.Context, req *pb.GetTran
 			Amount:          float32(transaction.Amount),
 			TransactionType: transaction.TransactionType,
 			CreatedAt:       timestamppb.New(transaction.CreatedAt),
+			Walletidsource:  int32(transaction.WalletIDSource),
 		},
 	}, nil
 }
@@ -208,10 +209,33 @@ func (h *TransactionHandler) GetTransactionByUserID(ctx context.Context, req *pb
 			Amount:          float32(transaction.Amount),
 			TransactionType: transaction.TransactionType,
 			CreatedAt:       timestamppb.New(transaction.CreatedAt),
+			Walletidsource:  int32(transaction.WalletIDSource),
 		})
 	}
 
 	return &pb.GetTransactionByUserIDResponse{
 		Transactions: pbTransactions,
+	}, nil
+}
+
+func (h *TransactionHandler) GetWalletByID(ctx context.Context, req *pb.GetWalletByIdrequest) (*pb.GetWalletByIdrespon, error) {
+	id := int(req.Id)
+
+	wallet, err := h.service.GetWalletByID(ctx, id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get wallet by user ID: %v", err)
+	}
+
+	// Convert the wallet to the protobuf format
+	pbWallet := &pb.Wallet{
+		Id:        int32(wallet.Walletid),
+		UserId:    uint32(wallet.UserID),
+		Balance:   float32(wallet.Balance),
+		CreatedAt: timestamppb.New(wallet.CreatedAt),
+		UpdatedAt: timestamppb.New(wallet.UpdatedAt),
+	}
+
+	return &pb.GetWalletByIdrespon{
+		Wallet: pbWallet,
 	}, nil
 }
