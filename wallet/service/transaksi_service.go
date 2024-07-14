@@ -16,6 +16,7 @@ type ITransactionService interface {
 	Payment(ctx context.Context, walletID int, amount float64) error
 	GetWalletByID(ctx context.Context, walletID int) (entity.Wallet, error)
 	GetWalletByUserID(ctx context.Context, userID int) (entity.Wallet, error)
+	GetTransactionByUserID(ctx context.Context, userID int) ([]entity.Transaction, error)
 }
 
 // ITransactionRepository defines the interface for transaction repositories
@@ -26,6 +27,7 @@ type ITransactionRepository interface {
 	GetWalletByID(ctx context.Context, walletID int) (entity.Wallet, error)
 	UpdateWallet(ctx context.Context, wallet *entity.Wallet) error
 	GetWalletByUserID(ctx context.Context, userID int) (entity.Wallet, error)
+	GetTransactionByUserID(ctx context.Context, userID int) ([]entity.Transaction, error)
 }
 
 // transactionService is the implementation of ITransactionService that uses ITransactionRepository
@@ -195,4 +197,13 @@ func (s *transactionService) GetWalletByUserID(ctx context.Context, userID int) 
 		return entity.Wallet{}, fmt.Errorf("failed to get wallets: %v", err)
 	}
 	return wallets, nil
+}
+
+// GetTransactionByUserID retrieves transactions by user ID
+func (s *transactionService) GetTransactionByUserID(ctx context.Context, userID int) ([]entity.Transaction, error) {
+	transactions, err := s.transactionRepo.GetTransactionByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transactions: %v", err)
+	}
+	return transactions, nil
 }

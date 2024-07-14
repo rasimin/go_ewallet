@@ -189,3 +189,29 @@ func (h *TransactionHandler) GetWalletByUserID(ctx context.Context, req *pb.GetW
 		Wallets: pbWallet,
 	}, nil
 }
+
+// GetTransactionByUserID handles the gRPC request to get transactions by user ID
+func (h *TransactionHandler) GetTransactionByUserID(ctx context.Context, req *pb.GetTransactionByUserIDRequest) (*pb.GetTransactionByUserIDResponse, error) {
+	userID := int(req.UserId)
+
+	transactions, err := h.service.GetTransactionByUserID(ctx, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get transactions by user ID: %v", err)
+	}
+
+	// Convert the transactions to the protobuf format
+	var pbTransactions []*pb.Transaction
+	for _, transaction := range transactions {
+		pbTransactions = append(pbTransactions, &pb.Transaction{
+			TransactionId:   uint32(transaction.TransactionID),
+			WalletId:        int32(transaction.WalletID),
+			Amount:          float32(transaction.Amount),
+			TransactionType: transaction.TransactionType,
+			CreatedAt:       timestamppb.New(transaction.CreatedAt),
+		})
+	}
+
+	return &pb.GetTransactionByUserIDResponse{
+		Transactions: pbTransactions,
+	}, nil
+}

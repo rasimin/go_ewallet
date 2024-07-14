@@ -23,6 +23,11 @@ type TransferWalletRequest struct {
 	Amount     float32 `json:"amount"`
 }
 
+type UserAndWalletResponse struct {
+	User   *pb.User   `json:"user"`
+	Wallet *pb.Wallet `json:"wallet"`
+}
+
 const (
 	userAddress        = "localhost:50052"
 	transactionAddress = "localhost:50051"
@@ -194,12 +199,69 @@ func (s *server) topUp(c *gin.Context) {
 	})
 }
 
+func (s *server) getTransactionByUserID(c *gin.Context) {
+	userIDParam := c.Param("userID")
+	userID, err := strconv.ParseInt(userIDParam, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	res, err := s.transactionClient.GetTransactionByUserID(ctx, &pb.GetTransactionByUserIDRequest{UserId: int32(userID)})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res.GetTransactions())
+}
+
+func (s *server) getUserAndBalanceWallet(c *gin.Context) {
+	userIDParam := c.Param("userID")
+	userID, err := strconv.ParseInt(userIDParam, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	// Fetch user details
+	userRes, err := s.userClient.GetUserByID(ctx, &pb.GetUserByIDRequest{UserId: uint32(userID)})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Fetch wallet details
+	walletRes, err := s.transactionClient.GetWalletByUserID(ctx, &pb.GetWalletByUserIDRequest{UserId: int32(userID)})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Prepare combined response
+	response := UserAndWalletResponse{
+		User:   userRes.GetUser(),
+		Wallet: walletRes.GetWallets(),
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
 func main() {
 	srv := newServer()
 
 	r := gin.Default()
 	r.GET("/getUserByID/:userID", srv.getUserByID)
 	r.GET("/getWalletByUserID/:userID", srv.getWalletByUserID)
+	r.GET("/getTransactionByUserID/:userID", srv.getTransactionByUserID)
+	r.GET("/getUserAndBalanceWallet/:userID", srv.getUserAndBalanceWallet)
+
 	r.POST("/createUser", srv.createUser)
 	r.POST("/transferWallet", srv.transferWallet)
 	r.POST("/topUp", srv.topUp)

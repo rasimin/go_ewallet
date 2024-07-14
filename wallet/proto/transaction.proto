@@ -14,7 +14,8 @@ service TransactionService {
   rpc TransferWallet(TransferWalletRequest) returns (TransferWalletResponse);
   rpc TopUp(TopUpRequest) returns (TopUpResponse);
   rpc Payment(PaymentRequest) returns (PaymentResponse);
-  rpc GetWalletByUserID(GetWalletByUserIDRequest) returns (GetWalletByUserIDResponse); // New method
+  rpc GetWalletByUserID(GetWalletByUserIDRequest) returns (GetWalletByUserIDResponse);
+  rpc GetTransactionByUserID(GetTransactionByUserIDRequest) returns (GetTransactionByUserIDResponse);
 }
 
 
@@ -108,4 +109,15 @@ message GetWalletByUserIDRequest {
 // Response message for GetWalletByUserID
 message GetWalletByUserIDResponse {
    Wallet wallets = 1;
+}
+
+
+// Request message for GetTransactionByUserID
+message GetTransactionByUserIDRequest {
+  int32 user_id = 1;
+}
+
+// Response message for GetTransactionByUserID
+message GetTransactionByUserIDResponse {
+  repeated Transaction transactions = 1;
 }

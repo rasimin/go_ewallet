@@ -86,3 +86,17 @@ func (r *transactionRepository) UpdateWallet(ctx context.Context, wallet *entity
 	}
 	return nil
 }
+
+// GetTransactionByUserID retrieves transactions by user ID
+func (r *transactionRepository) GetTransactionByUserID(ctx context.Context, userID int) ([]entity.Transaction, error) {
+	var transactions []entity.Transaction
+
+	if err := r.db.WithContext(ctx).
+		Joins("JOIN wallets ON transactions.wallet_id = wallets.wallet_id").
+		Where("wallets.user_id = ?", userID).
+		Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+
+	return transactions, nil
+}
